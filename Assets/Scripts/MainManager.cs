@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -11,12 +12,15 @@ public class MainManager : MonoBehaviour
     public Rigidbody Ball;
 
     public Text ScoreText;
+    public Text BestScoreText;
     public GameObject GameOverText;
     
     private bool m_Started = false;
     private int m_Points;
     
     private bool m_GameOver = false;
+
+    private string playerName;
 
     
     // Start is called before the first frame update
@@ -36,6 +40,14 @@ public class MainManager : MonoBehaviour
                 brick.onDestroyed.AddListener(AddPoint);
             }
         }
+
+        if (DataManager.Instance != null)
+        {
+            playerName = DataManager.Instance.playerName;
+        }
+
+        AddPoint(0);
+        UpdateBestScoreText();
     }
 
     private void Update()
@@ -65,12 +77,39 @@ public class MainManager : MonoBehaviour
     void AddPoint(int point)
     {
         m_Points += point;
-        ScoreText.text = $"Score : {m_Points}";
+        ScoreText.text = $"{playerName}'s score : {m_Points}";
     }
 
     public void GameOver()
     {
         m_GameOver = true;
         GameOverText.SetActive(true);
+
+        if (DataManager.Instance != null && m_Points > DataManager.Instance.bestScore)
+        {
+            DataManager.Instance.bestScore = m_Points;
+            DataManager.Instance.bestScoreName = playerName;
+            UpdateBestScoreText();
+            DataManager.Instance.SaveBestScoreAndName();
+        }
+    }
+
+    void UpdateBestScoreText()
+    {
+        if (DataManager.Instance == null)
+        {
+            return;
+        }
+
+        int bestScore = DataManager.Instance.bestScore;
+
+        if (bestScore != 0)
+        {
+            BestScoreText.text = $"Best Score: {DataManager.Instance.bestScoreName}: {bestScore}";
+        }
+        else
+        {
+            BestScoreText.text = "";
+        }
     }
 }
